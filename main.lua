@@ -9,6 +9,15 @@ local starterWalk = humanoid.WalkSpeed
 local starterJump = humanoid.JumpPower
 local starterGravity = workspace.Gravity
 
+-- AttackSpeed Value (tự tạo cho game của bạn)
+local atk = character:FindFirstChild("AttackSpeed")
+if not atk then
+    atk = Instance.new("NumberValue")
+    atk.Name = "AttackSpeed"
+    atk.Value = 1   -- 1.0x attack speed mặc định
+    atk.Parent = character
+end
+
 -- ======= GUI =======
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -32,7 +41,7 @@ TBcorner.CornerRadius = UDim.new(0, 10)
 
 -- Khung menu
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 320, 0, 300)
+Frame.Size = UDim2.new(0, 320, 0, 360) -- tăng chiều cao UI
 Frame.Position = UDim2.new(0, 20, 0, 70)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Frame.Visible = false
@@ -121,11 +130,16 @@ CreateSlider(Frame, 190, "Gravity", 0, 196, starterGravity, function(val)
     workspace.Gravity = val
 end)
 
+-- ⭐ NEW: Attack Speed Slider ⭐
+CreateSlider(Frame, 260, "Tốc độ đánh", 1, 500, atk.Value * 100, function(val)
+    atk.Value = val / 100  -- 100 = 1.0x, 200 = 2.0x
+end)
+
 -- ======= RESET =======
 
 local ResetButton = Instance.new("TextButton")
 ResetButton.Size = UDim2.new(0, 120, 0, 35)
-ResetButton.Position = UDim2.new(0, 100, 0, 250)
+ResetButton.Position = UDim2.new(0, 100, 0, 310)
 ResetButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 ResetButton.Text = "Reset mặc định"
 ResetButton.Font = Enum.Font.GothamBold
@@ -140,6 +154,7 @@ ResetButton.MouseButton1Click:Connect(function()
     humanoid.WalkSpeed = starterWalk
     humanoid.JumpPower = starterJump
     workspace.Gravity = starterGravity
+    atk.Value = 1
 end)
 
 -- ======= TOGGLE MENU =======
