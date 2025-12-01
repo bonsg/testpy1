@@ -1,5 +1,15 @@
--- ====== LOADING RAYFIELD UI LIBRARY ======
+-- ====== WAIT CHARACTER ======
+repeat task.wait() until game:IsLoaded()
 
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+repeat task.wait() until player.Character
+
+local char = player.Character
+local humanoid = char:WaitForChild("Humanoid")
+
+-- ====== LOAD RAYFIELD ======
 local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source"))()
 
 local Window = Rayfield:CreateWindow({
@@ -13,16 +23,11 @@ local Window = Rayfield:CreateWindow({
 })
 
 -- ====== SERVICES ======
-local Players = game:GetService("Players")
 local Rep = game:GetService("ReplicatedStorage")
-
-local player = Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local humanoid = char:WaitForChild("Humanoid")
-
 local ChangeStats = Rep:FindFirstChild("ChangeStats")
-local atk = char:FindFirstChild("AttackSpeed")
 
+-- Attack Speed System
+local atk = char:FindFirstChild("AttackSpeed")
 if not atk then
     atk = Instance.new("NumberValue")
     atk.Name = "AttackSpeed"
@@ -46,7 +51,6 @@ Movement:CreateSlider({
     Increment = 1,
     Suffix = "WalkSpeed",
     CurrentValue = starterWalk,
-    Flag = "SpeedSlider",
     Callback = function(val)
         if ChangeStats then
             ChangeStats:FireServer("Speed", val)
@@ -62,7 +66,6 @@ Movement:CreateSlider({
     Increment = 1,
     Suffix = "Jump",
     CurrentValue = starterJump,
-    Flag = "JumpSlider",
     Callback = function(val)
         if ChangeStats then
             ChangeStats:FireServer("Jump", val)
@@ -78,7 +81,6 @@ Movement:CreateSlider({
     Increment = 1,
     Suffix = "Gravity",
     CurrentValue = starterGravity,
-    Flag = "GravitySlider",
     Callback = function(val)
         workspace.Gravity = val
     end,
@@ -104,7 +106,6 @@ Combat:CreateSlider({
     Increment = 1,
     Suffix = "%",
     CurrentValue = atk.Value * 100,
-    Flag = "AtkSpeed",
     Callback = function(val)
         local newAtk = val / 100
         atk.Value = newAtk
