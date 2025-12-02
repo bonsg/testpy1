@@ -1,134 +1,71 @@
--- ====== WAIT CHARACTER ======
-repeat task.wait() until game:IsLoaded()
+--// ESP CHEST MODULE BY TV LE PHONG //--
+
+local ESPChest = {}
 
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 
-repeat task.wait() until player.Character
+-- Hàm tạo ESP cho một Chest
+function ESPChest.Create(model)
+    if model:FindFirstChild("ChestESP_Highlight") then return end
 
-local char = player.Character
-local humanoid = char:WaitForChild("Humanoid")
+    -- Highlight
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ChestESP_Highlight"
+    highlight.FillColor = Color3.fromRGB(255, 255, 0)
+    highlight.OutlineColor = Color3.fromRGB(255, 180, 0)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    highlight.Adornee = model
+    highlight.Parent = model
 
--- ====== LOAD RAYFIELD ======
-local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source"))()
+    -- Billboard
+    local part = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+    if not part then return end
 
-local Window = Rayfield:CreateWindow({
-    Name = "Main Hub",
-    LoadingTitle = "Main Hub Loading...",
-    LoadingSubtitle = "by bạn 😎",
-    ConfigurationSaving = {
-       Enabled = true,
-       FolderName = "MyHubSettings"
-    },
-})
+    local bill = Instance.new("BillboardGui")
+    bill.Name = "ChestESP_Billboard"
+    bill.Size = UDim2.new(0, 130, 0, 30)
+    bill.AlwaysOnTop = true
+    bill.Adornee = part
+    bill.Parent = model
 
--- ====== SERVICES ======
-local Rep = game:GetService("ReplicatedStorage")
-local ChangeStats = Rep:FindFirstChild("ChangeStats")
+    local text = Instance.new("TextLabel")
+    text.Parent = bill
+    text.BackgroundTransparency = 1
+    text.Size = UDim2.new(1, 0, 1, 0)
+    text.Font = Enum.Font.FredokaOne
+    text.TextScaled = true
+    text.TextColor3 = Color3.fromRGB(255, 255, 0)
+    text.TextStrokeTransparency = 0.3
+    text.Text = "Chest"
 
--- Attack Speed System
-local atk = char:FindFirstChild("AttackSpeed")
-if not atk then
-    atk = Instance.new("NumberValue")
-    atk.Name = "AttackSpeed"
-    atk.Value = 1
-    atk.Parent = char
+    -- Update Distance
+    task.spawn(function()
+        while model.Parent do
+            local root = Character:FindFirstChild("HumanoidRootPart")
+            if root and part then
+                local dist = (part.Position - root.Position).Magnitude
+                text.Text = "Chest [" .. math.floor(dist) .. "m]"
+            end
+            task.wait(0.1)
+        end
+    end)
 end
 
-local starterWalk = humanoid.WalkSpeed
-local starterJump = humanoid.JumpPower
-local starterGravity = workspace.Gravity
-
--- ========= TABS =========
-local Movement = Window:CreateTab("Movement", 4483362458)
-local Combat = Window:CreateTab("Combat", 4483362458)
-
--- ========= MOVEMENT TAB =========
-
-Movement:CreateSlider({
-    Name = "Speed",
-    Range = {0, 120},
-    Increment = 1,
-    Suffix = "WalkSpeed",
-    CurrentValue = starterWalk,
-    Callback = function(val)
-        if ChangeStats then
-            ChangeStats:FireServer("Speed", val)
-        else
-            humanoid.WalkSpeed = val
+-- Tự động scan Chest trong map
+function ESPChest.Start()
+    task.spawn(function()
+        while true do
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("Model") and v.Name:lower():find("chest") then
+                    ESPChest.Create(v)
+                end
+            end
+            task.wait(2)
         end
-    end,
-})
+    end)
+end
 
-Movement:CreateSlider({
-    Name = "Jump Power",
-    Range = {0, 150},
-    Increment = 1,
-    Suffix = "Jump",
-    CurrentValue = starterJump,
-    Callback = function(val)
-        if ChangeStats then
-            ChangeStats:FireServer("Jump", val)
-        else
-            humanoid.JumpPower = val
-        end
-    end,
-})
-
-Movement:CreateSlider({
-    Name = "Gravity",
-    Range = {0, 196},
-    Increment = 1,
-    Suffix = "Gravity",
-    CurrentValue = starterGravity,
-    Callback = function(val)
-        workspace.Gravity = val
-    end,
-})
-
-Movement:CreateButton({
-    Name = "Reset Movement",
-    Callback = function()
-        if ChangeStats then
-            ChangeStats:FireServer("Speed", starterWalk)
-            ChangeStats:FireServer("Jump", starterJump)
-        end
-        workspace.Gravity = starterGravity
-        Rayfield:Notify({Title = "Reset", Content = "Movement Reset Successful!"})
-    end,
-})
-
--- ========= COMBAT TAB =========
-
-Combat:CreateSlider({
-    Name = "Attack Speed",
-    Range = {1, 500},
-    Increment = 1,
-    Suffix = "%",
-    CurrentValue = atk.Value * 100,
-    Callback = function(val)
-        local newAtk = val / 100
-        atk.Value = newAtk
-
-        if ChangeStats then
-            ChangeStats:FireServer("AttackSpeed", newAtk)
-        end
-    end,
-})
-
-Combat:CreateButton({
-    Name = "Reset Attack",
-    Callback = function()
-        atk.Value = 1
-        if ChangeStats then
-            ChangeStats:FireServer("AttackSpeed", 1)
-        end
-        Rayfield:Notify({Title="Reset", Content="Attack Speed Reset!"})
-    end,
-})
-
--- ========= NOTIFICATION =========
-Rayfield:Notify({
-    Title = "Main Hub",
-    Content = "Hub Loaded Successfully!",
-})
+return ESPChest
