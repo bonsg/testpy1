@@ -1,4 +1,4 @@
---// ESP CHEST MODULE BY TV LE PHONG //--
+--// ESP CHEST MODULE BY TV LE PHONG //--  
 
 local ESPChest = {}
 
@@ -6,8 +6,24 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 
--- Hàm tạo ESP cho một Chest
+ESPChest.Enabled = false
+ESPChest._connections = {}
+
+-- Xóa toàn bộ ESP hiện có
+function ESPChest.Clear()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:FindFirstChild("ChestESP_Highlight") then
+            v.ChestESP_Highlight:Destroy()
+        end
+        if v:FindFirstChild("ChestESP_Billboard") then
+            v.ChestESP_Billboard:Destroy()
+        end
+    end
+end
+
+-- Hàm tạo ESP cho 1 Chest
 function ESPChest.Create(model)
+    if not ESPChest.Enabled then return end
     if model:FindFirstChild("ChestESP_Highlight") then return end
 
     -- Highlight
@@ -39,11 +55,10 @@ function ESPChest.Create(model)
     text.TextScaled = true
     text.TextColor3 = Color3.fromRGB(255, 255, 0)
     text.TextStrokeTransparency = 0.3
-    text.Text = "Chest"
 
     -- Update Distance
     task.spawn(function()
-        while model.Parent do
+        while ESPChest.Enabled and model.Parent do
             local root = Character:FindFirstChild("HumanoidRootPart")
             if root and part then
                 local dist = (part.Position - root.Position).Magnitude
@@ -54,18 +69,51 @@ function ESPChest.Create(model)
     end)
 end
 
--- Tự động scan Chest trong map
+-- Bắt đầu ESP
 function ESPChest.Start()
-    task.spawn(function()
-        while true do
+    if ESPChest.Enabled then return end
+    ESPChest.Enabled = true
+
+    -- Scanning loop
+    ESPChest._scanner = task.spawn(function()
+        while ESPChest.Enabled do
             for _, v in pairs(workspace:GetDescendants()) do
                 if v:IsA("Model") and v.Name:lower():find("chest") then
                     ESPChest.Create(v)
                 end
             end
-            task.wait(2)
+            task.wait(1.5)
         end
     end)
 end
+
+-- Tắt ESP
+function ESPChest.Stop()
+    ESPChest.Enabled = false
+    ESPChest.Clear()
+    if ESPChest._scanner then
+        task.cancel(ESPChest._scanner)
+    end
+end
+
+-- Toggle ESP
+function ESPChest.Toggle()
+    if ESPChest.Enabled then
+        ESPChest.Stop()
+    else
+        ESPChest.Start()
+    end
+end
+
+-- Phím tắt (K) toggle ESP
+task.spawn(function()
+    local UIS = game:GetService("UserInputService")
+    UIS.InputBegan:Connect(function(key, chat)
+        if chat then return end
+        if key.KeyCode == Enum.KeyCode.K then
+            ESPChest.Toggle()
+        end
+    end)
+end)
 
 return ESPChest
